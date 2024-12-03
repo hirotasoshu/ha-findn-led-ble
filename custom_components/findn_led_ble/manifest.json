@@ -1,0 +1,13 @@
+{
+  "domain": "findn_led_ble",
+  "name": "Findn LED BLE",
+  "codeowners": ["@hirotasoshu"],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "documentation": "https://github.com/hirotasoshu/ha-findn-led-ble",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/hirotasoshu/ha-findn-led-ble/issues",
+  "version": "0.0.0",
+  "integration_type": "device"
+}
+
