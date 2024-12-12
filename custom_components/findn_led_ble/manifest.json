@@ -1,13 +1,19 @@
 {
   "domain": "findn_led_ble",
   "name": "Findn LED BLE",
+  "bluetooth": [
+    {
+      "local_name": "GATT--DEMO",
+      "service_uuid": "0000fff0-0000-1000-8000-00805f9b34fb"
+    }
+  ],
   "codeowners": ["@hirotasoshu"],
   "config_flow": true,
-  "dependencies": ["bluetooth"],
+  "dependencies": ["bluetooth_adapters"],
   "documentation": "https://github.com/hirotasoshu/ha-findn-led-ble",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/hirotasoshu/ha-findn-led-ble/issues",
   "version": "0.0.0",
+  "requirements": ["bluetooth-data-tools"],
   "integration_type": "device"
 }
-
