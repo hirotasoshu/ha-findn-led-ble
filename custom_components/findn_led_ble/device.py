@@ -22,6 +22,8 @@ from .const import (
 from .device_protocol import FindnLedBLEProtocol
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from bleak.backends.characteristic import BleakGATTCharacteristic
     from bleak.backends.device import BLEDevice
     from bleak.backends.scanner import AdvertisementData
