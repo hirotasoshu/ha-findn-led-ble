@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING
 
 from bleak.exc import BleakDBusError, BleakError
 from bleak_retry_connector import BLEAK_RETRY_EXCEPTIONS as BLEAK_EXCEPTIONS
@@ -29,9 +28,6 @@ if TYPE_CHECKING:
     from bleak.backends.service import BleakGATTServiceCollection
 
 BLEAK_BACKOFF_TIME = 0.25
-
-
-WrapFuncType = TypeVar("WrapFuncType", bound=Callable[..., Any])
 
 DISCONNECT_DELAY = 120
 
