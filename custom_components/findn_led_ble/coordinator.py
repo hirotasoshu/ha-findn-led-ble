@@ -1,30 +1,28 @@
+# pyright: reportImportCycles=false
 """DataUpdateCoordinator for findn_led_ble."""
 
 from __future__ import annotations
 
-from datetime import timedelta
-from typing import TYPE_CHECKING, Any
+from logging import Logger, getLogger
+from typing import TYPE_CHECKING, override
 
-from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
-from .api import (
-    IntegrationBlueprintApiClientAuthenticationError,
-    IntegrationBlueprintApiClientError,
-)
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN, UPDATE_INTERVAL
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
-    from .data import IntegrationBlueprintConfigEntry
+    from .data import FindnLedConfigEntry
+
+logger: Logger = getLogger(__name__)
 
 
 # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-class BlueprintDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage fetching data from the API."""
+class FindnLedDataUpdateCoordinator(DataUpdateCoordinator[None]):
+    """Class to manage fetching data from the device."""
 
-    config_entry: IntegrationBlueprintConfigEntry
+    config_entry: FindnLedConfigEntry
 
     def __init__(
         self,
@@ -33,16 +31,17 @@ class BlueprintDataUpdateCoordinator(DataUpdateCoordinator):
         """Initialize."""
         super().__init__(
             hass=hass,
-            logger=LOGGER,
+            logger=logger,
             name=DOMAIN,
-            update_interval=timedelta(hours=1),
+            update_interval=UPDATE_INTERVAL,
         )
 
-    async def _async_update_data(self) -> Any:
-        """Update data via library."""
-        try:
-            return await self.config_entry.runtime_data.client.async_get_data()
-        except IntegrationBlueprintApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
-        except IntegrationBlueprintApiClientError as exception:
-            raise UpdateFailed(exception) from exception
+    @override
+    async def _async_update_data(self) -> None:
+        """
+        Ensure device connection is established.
+
+        If connection can't be established, exception is raised.
+        This will mark device as unavailable.
+        """
+        await self.config_entry.runtime_data.device.update()
