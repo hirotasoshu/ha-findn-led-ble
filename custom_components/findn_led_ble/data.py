@@ -7,19 +7,18 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
-    from homeassistant.loader import Integration
 
-    from .api import IntegrationBlueprintApiClient
-    from .coordinator import BlueprintDataUpdateCoordinator
+    from .coordinator import FindnLedDataUpdateCoordinator
+    from .device import FindnLedDevice
 
 
-type IntegrationBlueprintConfigEntry = ConfigEntry[IntegrationBlueprintData]
+type FindnLedConfigEntry = ConfigEntry[FindnLedData]
 
 
 @dataclass
-class IntegrationBlueprintData:
-    """Data for the Blueprint integration."""
+class FindnLedData:
+    """Data for the Findn LED BLE integration."""
 
-    client: IntegrationBlueprintApiClient
-    coordinator: BlueprintDataUpdateCoordinator
-    integration: Integration
+    title: str
+    device: FindnLedDevice
+    coordinator: FindnLedDataUpdateCoordinator
