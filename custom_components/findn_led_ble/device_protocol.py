@@ -81,3 +81,29 @@ class FindnLedBLEProtocol:
     def construct_set_rgb_color_cmd(self, rgb: tuple[int, int, int]) -> bytes:
         """Construct command to set color using rgb."""
         return self.construct_set_hs_color_cmd(color_RGB_to_hs(*rgb))
+
+    def construct_set_effect_cmd(self, effect: int) -> [bytes]:
+        """Construct command to set effect."""
+        direction = 1 if effect > 0 else 0
+        effect = abs(effect)
+        return [
+            bytes(
+                [
+                    0xBC,
+                    0x06,
+                    0x02,
+                    effect // 256,
+                    effect % 256,
+                    0x55,
+                ]
+            ),
+            bytes(
+                [
+                    0xBC,
+                    0x07,
+                    0x01,
+                    direction % 256,
+                    0x55,
+                ]
+            )
+        ]

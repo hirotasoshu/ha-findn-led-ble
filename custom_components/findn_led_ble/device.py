@@ -51,6 +51,7 @@ class FindnLedState:
     power: bool = False
     hs: tuple[float, float] = (0, 0)
     brightness: int = 1
+    effect: int = None
 
 
 class FindnLedDevice:
@@ -131,6 +132,11 @@ class FindnLedDevice:
         """Return current brightness 0-255."""
         return self._state.brightness
 
+    @property
+    def effect(self) -> int:
+        """Return current effect."""
+        return self._state.effect
+
     async def update(self) -> None:
         """Update the Findn LED BLE."""
         await self._ensure_connected()
@@ -164,6 +170,15 @@ class FindnLedDevice:
         logger.debug("%s: Set hs color: %s", self.name, hs)
         await self._send_command(self._protocol.construct_set_hs_color_cmd(hs))
         self._state = replace(self._state, hs=hs)
+        self.update_callback()
+
+    async def set_effect(self, effect: int) -> None:
+        """Set the effect effect."""
+        logger.debug("%s: Set effect: %s", self.name, effect)
+        await self._send_command(
+            self._protocol.construct_set_effect_cmd(effect)
+        )
+        self._state = replace(self._state, effect=effect)
         self.update_callback()
 
     async def stop(self) -> None:

@@ -7,9 +7,11 @@ from typing import TYPE_CHECKING, Any, override
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_HS_COLOR,
+    ATTR_EFFECT,
     ColorMode,
     LightEntity,
     LightEntityDescription,
+    LightEntityFeature,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
@@ -68,6 +70,8 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
             name=self.device.name,
             connections={(dr.CONNECTION_BLUETOOTH, self.device.address)},
         )
+        self._attr_supported_color_modes = {ColorMode.RGB}
+        self._attr_supported_features = LightEntityFeature.EFFECT
         self._async_update_attrs()
 
     @callback
@@ -76,16 +80,20 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
         self._attr_brightness = self.device.brightness
         self._attr_hs_color = self.device.hs
         self._attr_is_on = self.device.is_on
+        self._attr_effect = self.device.effect
 
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:  # pyright: ignore[reportAny]
         """Instruct the light to turn on."""
-        if not self.device.is_on:
-            await self.device.turn_on()
         if hs := kwargs.get(ATTR_HS_COLOR):
             await self.device.set_hs_color(hs)  # pyright: ignore[reportAny]
         if brightness := kwargs.get(ATTR_BRIGHTNESS):
             await self.device.set_brightness(brightness)  # pyright: ignore[reportAny]
+        if effect := kwargs.get(ATTR_EFFECT):
+            effect = int(effect, base=0)
+            await self.device.set_effect(effect)  # pyright: ignore[reportAny]
+        if not self.device.is_on:
+            await self.device.turn_on()
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:  # pyright: ignore[reportAny]
