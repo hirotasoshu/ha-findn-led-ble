@@ -9,6 +9,7 @@ set_effect_with_direction:
       name: Effect
       description: Name of the effect to apply
       required: true
+      example: "Test Effect"
       selector:
         select:
           options:
@@ -19,6 +20,7 @@ set_effect_with_direction:
       description: Direction of the effect (forward/backward)
       required: false
       default: forward
+      example: forward
       selector:
         select:
           options:
