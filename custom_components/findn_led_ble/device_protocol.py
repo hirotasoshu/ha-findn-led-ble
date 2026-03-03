@@ -6,6 +6,11 @@ from typing import Final
 
 from homeassistant.util.color import brightness_to_value, color_RGB_to_hs
 
+EFFECT_TO_ID: Final[dict[str, int]] = {
+    "Test Effect": 1000,
+}
+EFFECTS_LIST: Final[list[str]] = list(EFFECT_TO_ID.keys())
+
 
 class EffectDirection(StrEnum):
     """Effect direction enum."""
@@ -22,20 +27,11 @@ class FindnLedBLEProtocol:
 
     _BRIGHTESS_SCALE_RANGE: Final[tuple[int, int]] = (100, 1000)
 
-    _EFFECTS: Final[dict[str, int]] = {
-        "Test Effect": 1000,
-    }
-
     def __get_effect_id(self, effect_name: str) -> int:
         """Get effect ID by name."""
-        if effect_name in self._EFFECTS:
-            return self._EFFECTS[effect_name]
+        if effect_name in EFFECT_TO_ID:
+            return EFFECT_TO_ID[effect_name]
         raise ValueError(f"Unknown effect: {effect_name}")
-
-    @cached_property
-    def effect_list(self) -> list[str]:
-        """Get list of available effect names."""
-        return list(self._EFFECTS.keys())
 
     @cached_property
     def turn_on_command(self) -> bytes:

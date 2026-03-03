@@ -20,7 +20,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import async_get_current_platform
 
 from .const import SERVICE_SET_EFFECT_WITH_DIRECTION
-from .device_protocol import EffectDirection
+from .device_protocol import EFFECTS_LIST, EffectDirection
 from .entity import FindnLedEntity
 
 if TYPE_CHECKING:
@@ -29,6 +29,8 @@ if TYPE_CHECKING:
     from .coordinator import FindnLedDataUpdateCoordinator
     from .data import FindnLedConfigEntry
     from .device import FindnLedDevice
+
+EFFECTS_LIST_WITH_OFF = [EFFECT_OFF, *EFFECTS_LIST]
 
 ENTITY_DESCRIPTIONS = (
     LightEntityDescription(
@@ -41,7 +43,7 @@ ENTITY_DESCRIPTIONS = (
 
 SET_EFFECT_WITH_DIRECTION_SCHEMA = vol.Schema(
     {
-        vol.Required("effect"): str,
+        vol.Required("effect"): vol.In(EFFECTS_LIST_WITH_OFF),
         vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),  # pyright: ignore[reportArgumentType]
     },
     extra=vol.ALLOW_EXTRA,
@@ -96,10 +98,7 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
             connections={(dr.CONNECTION_BLUETOOTH, self.device.address)},
         )
         self._attr_supported_features: LightEntityFeature = LightEntityFeature.EFFECT  # pyright: ignore[reportIncompatibleVariableOverride]
-        self._attr_effect_list: list[str] | None = [
-            EFFECT_OFF,
-            *self.device.effect_list,
-        ]
+        self._attr_effect_list: list[str] | None = EFFECTS_LIST_WITH_OFF
         self._async_update_attrs()
 
     @callback

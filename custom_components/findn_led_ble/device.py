@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, replace
-from functools import cached_property
 from typing import TYPE_CHECKING
 
 from bleak.exc import BleakDBusError, BleakError
@@ -138,11 +137,6 @@ class FindnLedDevice:
     def effect(self) -> str | None:
         """Return current effect."""
         return self._state.effect
-
-    @cached_property
-    def effect_list(self) -> list[str]:
-        """Return supported effects."""
-        return self._protocol.effect_list
 
     async def update(self) -> None:
         """Update the Findn LED BLE."""
