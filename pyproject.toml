@@ -12,6 +12,8 @@ ignore = [
   "ISC001", # incompatible with formatter
   "TRY003",
   "EM101",
+  "EM102",
+
 ]
 
 [tool.ruff.flake8-pytest-style]
@@ -22,3 +24,8 @@ keep-runtime-typing = true
 
 [tool.ruff.mccabe]
 max-complexity = 25
+
+
+[tool.basedpyright]
+reportUnusedCallResult = "none"
+reportMissingTypeStubs = "none"

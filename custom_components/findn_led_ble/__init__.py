@@ -36,7 +36,7 @@ async def async_setup_entry(
     coordinator = FindnLedDataUpdateCoordinator(
         hass=hass,
     )
-    address: str = entry.data[CONF_ADDRESS]
+    address: str = entry.data[CONF_ADDRESS]  # pyright: ignore[reportAny]
     ble_device = bluetooth.async_ble_device_from_address(
         hass=hass, address=address.upper(), connectable=True
     )
@@ -105,4 +105,4 @@ async def async_reload_entry(
 ) -> None:
     """Reload config entry."""
     if entry.runtime_data.title != entry.title:
-        await hass.config_entries.async_reload(entry.entry_id)  # pyright: ignore[reportUnusedCallResult]
+        await hass.config_entries.async_reload(entry.entry_id)
