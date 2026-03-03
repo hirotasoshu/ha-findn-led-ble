@@ -70,7 +70,6 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
             name=self.device.name,
             connections={(dr.CONNECTION_BLUETOOTH, self.device.address)},
         )
-        self._attr_supported_color_modes = {ColorMode.RGB}
         self._attr_supported_features = LightEntityFeature.EFFECT
         self._async_update_attrs()
 
