@@ -14,8 +14,8 @@ class FindnLedEntity(CoordinatorEntity[FindnLedDataUpdateCoordinator]):
     def __init__(self, coordinator: FindnLedDataUpdateCoordinator) -> None:
         """Initialize."""
         super().__init__(coordinator)
-        self._attr_unique_id = coordinator.config_entry.entry_id
-        self._attr_device_info = DeviceInfo(
+        self._attr_unique_id: str | None = coordinator.config_entry.entry_id
+        self._attr_device_info: DeviceInfo | None = DeviceInfo(
             identifiers={
                 (
                     coordinator.config_entry.domain,

@@ -1,0 +1,27 @@
+set_effect_with_direction:
+  name: Set effect with direction
+  description: Set LED strip effect with specified direction
+  target:
+    entity:
+      integration: findn_led_ble
+  fields:
+    effect:
+      name: Effect
+      description: Name of the effect to apply
+      required: true
+      selector:
+        select:
+          options:
+            - "off"
+            - "Test Effect"
+    direction:
+      name: Direction
+      description: Direction of the effect (forward/backward)
+      required: false
+      default: forward
+      selector:
+        select:
+          options:
+            - forward
+            - backward
+

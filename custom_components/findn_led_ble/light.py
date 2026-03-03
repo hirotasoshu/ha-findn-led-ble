@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, override
 
+import voluptuous as vol
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
-    ATTR_HS_COLOR,
     ATTR_EFFECT,
+    ATTR_HS_COLOR,
+    EFFECT_OFF,
     ColorMode,
     LightEntity,
     LightEntityDescription,
@@ -15,7 +17,10 @@ from homeassistant.components.light import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.entity_platform import async_get_current_platform
 
+from .const import SERVICE_SET_EFFECT_WITH_DIRECTION
+from .device_protocol import EffectDirection
 from .entity import FindnLedEntity
 
 if TYPE_CHECKING:
@@ -23,6 +28,7 @@ if TYPE_CHECKING:
 
     from .coordinator import FindnLedDataUpdateCoordinator
     from .data import FindnLedConfigEntry
+    from .device import FindnLedDevice
 
 ENTITY_DESCRIPTIONS = (
     LightEntityDescription(
@@ -33,9 +39,17 @@ ENTITY_DESCRIPTIONS = (
     ),
 )
 
+SET_EFFECT_WITH_DIRECTION_SCHEMA = vol.Schema(
+    {
+        vol.Required("effect"): str,
+        vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),  # pyright: ignore[reportArgumentType]
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 
 async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001 # pyright: ignore[reportUnusedParameter]
+    _: HomeAssistant,
     entry: FindnLedConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
@@ -48,11 +62,22 @@ async def async_setup_entry(
         for entity_description in ENTITY_DESCRIPTIONS
     )
 
+    # Add services using entity platform
+    platform = async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_EFFECT_WITH_DIRECTION,
+        SET_EFFECT_WITH_DIRECTION_SCHEMA,
+        "async_set_effect_with_direction",
+    )
+
 
 class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """findn_led_ble light class."""
 
-    _attr_supported_color_modes: set[ColorMode] | set[str] | None = {ColorMode.HS}  # noqa: RUF012
+    _attr_supported_color_modes: set[ColorMode] | set[str] | None = {  # noqa: RUF012
+        ColorMode.HS,
+        ColorMode.BRIGHTNESS,
+    }
 
     def __init__(
         self,
@@ -61,28 +86,39 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
     ) -> None:
         """Initialize the light class."""
         super().__init__(coordinator)
-        self.entity_description = entity_description
-        self.device = coordinator.config_entry.runtime_data.device
+        self.entity_description: LightEntityDescription = entity_description  # pyright: ignore[reportIncompatibleVariableOverride]
+        self.device: FindnLedDevice = coordinator.config_entry.runtime_data.device
         self.device.set_update_callback(self._handle_coordinator_update)
 
-        self._attr_unique_id = self.device.address
-        self._attr_device_info = dr.DeviceInfo(
+        self._attr_unique_id: str | None = self.device.address
+        self._attr_device_info: dr.DeviceInfo | None = dr.DeviceInfo(
             name=self.device.name,
             connections={(dr.CONNECTION_BLUETOOTH, self.device.address)},
         )
-        self._attr_supported_features = LightEntityFeature.EFFECT
+        self._attr_supported_features: LightEntityFeature = LightEntityFeature.EFFECT  # pyright: ignore[reportIncompatibleVariableOverride]
+        self._attr_effect_list: list[str] | None = [
+            EFFECT_OFF,
+            *self.device.effect_list,
+        ]
         self._async_update_attrs()
 
     @callback
     def _async_update_attrs(self) -> None:
         """Handle updating _attr values."""
-        self._attr_brightness = self.device.brightness
-        self._attr_hs_color = self.device.hs
-        self._attr_is_on = self.device.is_on
-        self._attr_effect = self.device.effect
+        self._attr_brightness: int | None = self.device.brightness
+        self._attr_hs_color: tuple[float, float] | None = self.device.hs
+        self._attr_is_on: bool | None = self.device.is_on
+
+        current_effect = self.device.effect
+        if current_effect:
+            self._attr_effect: str | None = current_effect
+            self._attr_color_mode: ColorMode | str | None = ColorMode.BRIGHTNESS
+        else:
+            self._attr_effect = EFFECT_OFF
+            self._attr_color_mode = ColorMode.HS
 
     @override
-    async def async_turn_on(self, **kwargs: Any) -> None:  # pyright: ignore[reportAny]
+    async def async_turn_on(self, **kwargs: Any) -> None:  # pyright: ignore[reportExplicitAny, reportAny]
         """Instruct the light to turn on."""
         if not self.device.is_on:
             await self.device.turn_on()
@@ -91,17 +127,28 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
         if brightness := kwargs.get(ATTR_BRIGHTNESS):
             await self.device.set_brightness(brightness)  # pyright: ignore[reportAny]
         if effect := kwargs.get(ATTR_EFFECT):
-            effect = int(effect, base=0)
-            await self.device.set_effect(effect)  # pyright: ignore[reportAny]
+            if effect == EFFECT_OFF:
+                await self.device.clear_effect()
+            else:
+                await self.device.set_effect(effect, EffectDirection.FORWARD)  # pyright: ignore[reportAny]
 
     @override
-    async def async_turn_off(self, **kwargs: Any) -> None:  # pyright: ignore[reportAny]
+    async def async_turn_off(self, **kwargs: Any) -> None:  # pyright: ignore[reportExplicitAny, reportAny]
         """Instruct the light to turn off."""
         await self.device.turn_off()
 
+    async def async_set_effect_with_direction(
+        self, effect: str, direction: EffectDirection = EffectDirection.FORWARD
+    ) -> None:
+        """Set effect with direction service."""
+        if effect == EFFECT_OFF:
+            await self.device.clear_effect()
+        else:
+            await self.device.set_effect(effect, direction)
+
     @override
     @callback
-    def _handle_coordinator_update(self, *args: Any) -> None:  # pyright: ignore[reportAny]
+    def _handle_coordinator_update(self, *args: Any) -> None:  # pyright: ignore[reportExplicitAny, reportAny]
         """Handle data update."""
         self._async_update_attrs()
         self.async_write_ha_state()

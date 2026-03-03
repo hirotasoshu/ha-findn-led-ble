@@ -1,8 +1,34 @@
 """Findn LED BLE device protocol."""
 
-from typing import Final
+from enum import StrEnum, auto
+from functools import cached_property
+from typing import Final, override
 
 from homeassistant.util.color import brightness_to_value, color_RGB_to_hs
+
+
+class EffectDirection(StrEnum):
+    """Effect direction enum."""
+
+    FORWARD = auto()
+    BACKWARD = auto()
+
+    @classmethod
+    @override
+    def _missing_(cls, value: object) -> "EffectDirection":
+        """Handle missing values."""
+        if value is None:
+            return cls.FORWARD
+
+        if isinstance(value, (int, float)):
+            return cls.FORWARD if value == 0 else cls.BACKWARD
+
+        if isinstance(value, str):
+            str_value = value.strip().lower()
+            if str_value in ("backward", "1"):
+                return cls.BACKWARD
+
+        return cls.FORWARD
 
 
 class FindnLedBLEProtocol:
@@ -13,12 +39,27 @@ class FindnLedBLEProtocol:
 
     _BRIGHTESS_SCALE_RANGE: tuple[int, int] = (100, 1000)
 
-    @property
+    _EFFECTS: Final[dict[str, int]] = {
+        "Test Effect": 1000,
+    }
+
+    def __get_effect_id(self, effect_name: str) -> int:
+        """Get effect ID by name."""
+        if effect_name in self._EFFECTS:
+            return self._EFFECTS[effect_name]
+        raise ValueError(f"Unknown effect: {effect_name}")
+
+    @cached_property
+    def effect_list(self) -> list[str]:
+        """Get list of available effect names."""
+        return list(self._EFFECTS.keys())
+
+    @cached_property
     def turn_on_command(self) -> bytes:
         """Turn ON command."""
         return self._TURN_ON_CMD
 
-    @property
+    @cached_property
     def turn_off_command(self) -> bytes:
         """Turn OFF command."""
         return self._TURN_OFF_CMD
@@ -82,18 +123,20 @@ class FindnLedBLEProtocol:
         """Construct command to set color using rgb."""
         return self.construct_set_hs_color_cmd(color_RGB_to_hs(*rgb))
 
-    def construct_set_effect_cmd(self, effect: int) -> [bytes]:
+    def construct_set_effect_cmd(
+        self, effect_name: str, direction: EffectDirection = EffectDirection.FORWARD
+    ) -> list[bytes]:
         """Construct command to set effect."""
-        direction = 1 if effect > 0 else 0
-        effect = abs(effect)
+        effect_id = self.__get_effect_id(effect_name)
+        direction_value = 1 if direction == EffectDirection.BACKWARD else 0
         return [
             bytes(
                 [
                     0xBC,
                     0x06,
                     0x02,
-                    effect // 256,
-                    effect % 256,
+                    effect_id // 256,
+                    effect_id % 256,
                     0x55,
                 ]
             ),
@@ -102,8 +145,8 @@ class FindnLedBLEProtocol:
                     0xBC,
                     0x07,
                     0x01,
-                    direction % 256,
+                    direction_value,
                     0x55,
                 ]
-            )
+            ),
         ]
