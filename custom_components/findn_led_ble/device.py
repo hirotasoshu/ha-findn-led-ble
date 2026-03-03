@@ -360,4 +360,3 @@ class FindnLedDevice:
         if char := services.get_characteristic(WRITE_CHARACTERISTIC_UUID):
             self._write_char = char
         return bool(self._write_char)
-
