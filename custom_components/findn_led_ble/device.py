@@ -183,14 +183,15 @@ class FindnLedDevice:
         """Remove effect, set previous color."""
         await self.set_hs_color(self._state.hs)
 
-    async def set_effect(self, effect_name: str, direction: str = "forward") -> None:
+    async def set_effect(
+        self, effect_name: str, direction: EffectDirection = EffectDirection.FORWARD
+    ) -> None:
         """Set the effect."""
-        effect_direction = EffectDirection(direction)
         logger.debug(
             "%s: Set effect: %s, direction: %s", self.name, effect_name, direction
         )
         await self._send_command(
-            self._protocol.construct_set_effect_cmd(effect_name, effect_direction)
+            self._protocol.construct_set_effect_cmd(effect_name, direction)
         )
         self._state = replace(self._state, effect=effect_name)
         self.update_callback()
@@ -359,3 +360,4 @@ class FindnLedDevice:
         if char := services.get_characteristic(WRITE_CHARACTERISTIC_UUID):
             self._write_char = char
         return bool(self._write_char)
+

@@ -2,7 +2,7 @@
 
 from enum import StrEnum, auto
 from functools import cached_property
-from typing import Final, override
+from typing import Final
 
 from homeassistant.util.color import brightness_to_value, color_RGB_to_hs
 
@@ -13,23 +13,6 @@ class EffectDirection(StrEnum):
     FORWARD = auto()
     BACKWARD = auto()
 
-    @classmethod
-    @override
-    def _missing_(cls, value: object) -> "EffectDirection":
-        """Handle missing values."""
-        if value is None:
-            return cls.FORWARD
-
-        if isinstance(value, (int, float)):
-            return cls.FORWARD if value == 0 else cls.BACKWARD
-
-        if isinstance(value, str):
-            str_value = value.strip().lower()
-            if str_value in ("backward", "1"):
-                return cls.BACKWARD
-
-        return cls.FORWARD
-
 
 class FindnLedBLEProtocol:
     """Protocol for Findn LED BLE strip."""
@@ -37,7 +20,7 @@ class FindnLedBLEProtocol:
     _TURN_ON_CMD: Final[bytes] = bytes([0xBC, 0x01, 0x01, 0x01, 0x55])
     _TURN_OFF_CMD: Final[bytes] = bytes([0xBC, 0x01, 0x01, 0x00, 0x55])
 
-    _BRIGHTESS_SCALE_RANGE: tuple[int, int] = (100, 1000)
+    _BRIGHTESS_SCALE_RANGE: Final[tuple[int, int]] = (100, 1000)
 
     _EFFECTS: Final[dict[str, int]] = {
         "Test Effect": 1000,
