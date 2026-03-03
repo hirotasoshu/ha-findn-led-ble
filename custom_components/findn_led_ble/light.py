@@ -84,6 +84,8 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
     @override
     async def async_turn_on(self, **kwargs: Any) -> None:  # pyright: ignore[reportAny]
         """Instruct the light to turn on."""
+        if not self.device.is_on:
+            await self.device.turn_on()
         if hs := kwargs.get(ATTR_HS_COLOR):
             await self.device.set_hs_color(hs)  # pyright: ignore[reportAny]
         if brightness := kwargs.get(ATTR_BRIGHTNESS):
@@ -91,8 +93,6 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
         if effect := kwargs.get(ATTR_EFFECT):
             effect = int(effect, base=0)
             await self.device.set_effect(effect)  # pyright: ignore[reportAny]
-        if not self.device.is_on:
-            await self.device.turn_on()
 
     @override
     async def async_turn_off(self, **kwargs: Any) -> None:  # pyright: ignore[reportAny]
