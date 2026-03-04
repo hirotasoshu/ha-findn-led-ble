@@ -40,13 +40,10 @@ ENTITY_DESCRIPTIONS = (
     ),
 )
 
-SET_EFFECT_SCHEMA = vol.Schema(
-    {
-        vol.Required("effect"): vol.In(EFFECTS_LIST_WITH_OFF),
-        vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),
-    },
-    extra=vol.ALLOW_EXTRA,
-)
+SET_EFFECT_SCHEMA = {
+    vol.Required("effect"): vol.In(EFFECTS_LIST_WITH_OFF),
+    vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),
+}
 
 
 async def async_setup_entry(
