@@ -164,7 +164,7 @@ class FindnLedBLEProtocol:
     ) -> list[bytes]:
         """Construct command to set effect."""
         effect_byte = self.__get_effect_byte(effect_name)
-        direction_value = 1 if direction == EffectDirection.BACKWARD else 0
+        direction_value = 0 if direction == EffectDirection.BACKWARD else 1
         return [
             bytes([0xBC, 0x06, 0x02, 0x00, effect_byte, 0x55]),
             bytes([0xBC, 0x07, 0x01, direction_value, 0x55]),
