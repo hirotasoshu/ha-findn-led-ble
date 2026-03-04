@@ -10,4 +10,4 @@ UPDATE_INTERVAL = timedelta(seconds=15)
 
 WRITE_CHARACTERISTIC_UUID = "0000fff3-0000-1000-8000-00805f9b34fb"
 
-SERVICE_SET_EFFECT_WITH_DIRECTION = "set_effect_with_direction"
+SERVICE_SET_EFFECT = "set_effect"

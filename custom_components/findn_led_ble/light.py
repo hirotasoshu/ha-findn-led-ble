@@ -18,7 +18,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import async_get_current_platform
 
-from .const import SERVICE_SET_EFFECT_WITH_DIRECTION
+from .const import SERVICE_SET_EFFECT
 from .device_protocol import EFFECTS_LIST, EffectDirection
 from .entity import FindnLedEntity
 
@@ -40,7 +40,7 @@ ENTITY_DESCRIPTIONS = (
     ),
 )
 
-SET_EFFECT_WITH_DIRECTION_SCHEMA = vol.Schema(
+SET_EFFECT_SCHEMA = vol.Schema(
     {
         vol.Required("effect"): vol.In(EFFECTS_LIST_WITH_OFF),
         vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),
@@ -66,9 +66,9 @@ async def async_setup_entry(
     # Add services using entity platform
     platform = async_get_current_platform()
     platform.async_register_entity_service(
-        SERVICE_SET_EFFECT_WITH_DIRECTION,
-        SET_EFFECT_WITH_DIRECTION_SCHEMA,
-        "async_set_effect_with_direction",
+        SERVICE_SET_EFFECT,
+        SET_EFFECT_SCHEMA,
+        "async_set_effect",
     )
 
 
@@ -135,7 +135,7 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
         """Instruct the light to turn off."""
         await self.device.turn_off()
 
-    async def async_set_effect_with_direction(
+    async def async_set_effect(
         self, effect: str, direction: EffectDirection = EffectDirection.FORWARD
     ) -> None:
         """Set effect with direction service."""

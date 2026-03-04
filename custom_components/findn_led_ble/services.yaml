@@ -1,4 +1,4 @@
-set_effect_with_direction:
+set_effect:
   name: Set effect with direction
   description: Set LED strip effect with specified direction
   target:
@@ -26,4 +26,3 @@ set_effect_with_direction:
           options:
             - forward
             - backward
-
