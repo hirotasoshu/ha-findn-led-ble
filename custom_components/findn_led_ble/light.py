@@ -10,11 +10,10 @@ from homeassistant.components.light import (
     ATTR_EFFECT,
     ATTR_HS_COLOR,
     EFFECT_OFF,
-    ColorMode,
     LightEntity,
     LightEntityDescription,
-    LightEntityFeature,
 )
+from homeassistant.components.light.const import ColorMode, LightEntityFeature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import async_get_current_platform
@@ -44,7 +43,7 @@ ENTITY_DESCRIPTIONS = (
 SET_EFFECT_WITH_DIRECTION_SCHEMA = vol.Schema(
     {
         vol.Required("effect"): vol.In(EFFECTS_LIST_WITH_OFF),
-        vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),  # pyright: ignore[reportArgumentType]
+        vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),
     },
     extra=vol.ALLOW_EXTRA,
 )
@@ -76,7 +75,7 @@ async def async_setup_entry(
 class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncompatibleVariableOverride]
     """findn_led_ble light class."""
 
-    _attr_supported_color_modes: set[ColorMode] | set[str] | None = {  # noqa: RUF012
+    _attr_supported_color_modes: set[ColorMode] | None = {  # noqa: RUF012
         ColorMode.HS,
         ColorMode.BRIGHTNESS,
     }
@@ -111,7 +110,7 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
         current_effect = self.device.effect
         if current_effect:
             self._attr_effect: str | None = current_effect
-            self._attr_color_mode: ColorMode | str | None = ColorMode.BRIGHTNESS
+            self._attr_color_mode: ColorMode | None = ColorMode.BRIGHTNESS
         else:
             self._attr_effect = EFFECT_OFF
             self._attr_color_mode = ColorMode.HS

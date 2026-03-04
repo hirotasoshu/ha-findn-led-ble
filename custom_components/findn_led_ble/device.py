@@ -221,10 +221,7 @@ class FindnLedDevice:
                 ble_device_callback=lambda: self._ble_device,
             )
             logger.debug("%s: Connected; RSSI: %s", self.name, self.rssi)
-            resolved = self._resolve_characteristics(client.services)
-            if not resolved:
-                # Try to handle services failing to load
-                resolved = self._resolve_characteristics(await client.get_services())  # pyright: ignore[reportUnknownMemberType]
+            self._resolve_characteristics(client.services)
 
             self._client = client
             self._reset_disconnect_timer()
