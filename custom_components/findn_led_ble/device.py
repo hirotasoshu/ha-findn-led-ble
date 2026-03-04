@@ -345,6 +345,7 @@ class FindnLedDevice:
             await self._client.write_gatt_char(
                 self._write_char, command, response=False
             )
+            await asyncio.sleep(0.1)
 
     def _resolve_characteristics(self, services: BleakGATTServiceCollection) -> bool:
         """Resolve characteristics."""
