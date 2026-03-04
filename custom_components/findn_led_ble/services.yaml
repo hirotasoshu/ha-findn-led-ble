@@ -1,0 +1,85 @@
+set_effect:
+  name: Set effect with direction
+  description: Set LED strip effect with specified direction
+  target:
+    entity:
+      integration: findn_led_ble
+  fields:
+    effect:
+      name: Effect
+      description: Name of the effect to apply
+      required: true
+      example: "Automatic loop"
+      selector:
+        select:
+          options:
+            - "off"
+            - "Automatic loop"
+            - "Symphony"
+            - "Colorful energy"
+            - "Colorful jumps"
+            - "7 colors stobe"
+            - "7 colors gradient"
+            - "Colorful fluttering"
+            - "Red-green-blue fluttering"
+            - "Colorful brushing"
+            - "Red-green-blue color brushing"
+            - "Yellow-cyan-purple color brushing"
+            - "Colorful brush color brush closed-pull"
+            - "White opening-closing"
+            - "Puprle opening-closing"
+            - "Cyan opening-closing"
+            - "Yellow opening-closing"
+            - "Blue opening-closing"
+            - "Green opening-closing"
+            - "Red opening-closing"
+            - "Yellow-cyan-purple opening-closing"
+            - "Red-green-blue opening-closing"
+            - "7 colors opening-closing"
+            - "7 colors light-dark transition"
+            - "Blue-red-green light-dark transition"
+            - "Violent-green-yellow light-dark transition"
+            - "6 colors light-dark transition red"
+            - "6 colors light-dark transition green"
+            - "6 colors light-dark transition blue"
+            - "6 colors light-dark transition cyan"
+            - "6 colors light-dark transition yellow"
+            - "6 colors light-dark transition purple"
+            - "6 colors light-dark transition white"
+            - "Blue-purple running water"
+            - "Yellow-cyan running water"
+            - "Yellow-blue running water"
+            - "Green-blue running water"
+            - "Red-green running water"
+            - "Purple-green-yellow running water"
+            - "Blue-green-red running water"
+            - "7 colors flowing water"
+            - "7 colors tailing"
+            - "Red tailing"
+            - "Green tailing"
+            - "Blue tailing"
+            - "Yellow tailing"
+            - "Cyan tailing"
+            - "Purple tailing"
+            - "White tailing"
+            - "7 colors running"
+            - "Blue-green-red running"
+            - "Purple-cyan-yellow running"
+            - "White running"
+            - "Purple running"
+            - "Cyan running"
+            - "Yellow running"
+            - "Blue running"
+            - "Green running"
+            - "Red running"
+    direction:
+      name: Direction
+      description: Direction of the effect (forward/backward)
+      required: false
+      default: forward
+      example: forward
+      selector:
+        select:
+          options:
+            - forward
+            - backward

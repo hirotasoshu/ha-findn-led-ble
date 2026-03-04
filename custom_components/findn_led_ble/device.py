@@ -19,9 +19,10 @@ from bleak_retry_connector import (
 from .const import (
     WRITE_CHARACTERISTIC_UUID,
 )
-from .device_protocol import FindnLedBLEProtocol
+from .device_protocol import EffectDirection, FindnLedBLEProtocol
 
 if TYPE_CHECKING:
+    from asyncio import AbstractEventLoop, Lock
     from collections.abc import Callable
 
     from bleak.backends.characteristic import BleakGATTCharacteristic
@@ -51,6 +52,7 @@ class FindnLedState:
     power: bool = False
     hs: tuple[float, float] = (0, 0)
     brightness: int = 1
+    effect: str | None = None
 
 
 class FindnLedDevice:
@@ -60,16 +62,16 @@ class FindnLedDevice:
         self, ble_device: BLEDevice, advertisement_data: AdvertisementData | None = None
     ) -> None:
         """Init the Findn LED BLE."""
-        self._ble_device = ble_device
-        self._advertisement_data = advertisement_data
-        self._operation_lock = asyncio.Lock()
-        self._state = FindnLedState()
+        self._ble_device: BLEDevice = ble_device
+        self._advertisement_data: AdvertisementData | None = advertisement_data
+        self._operation_lock: Lock = asyncio.Lock()
+        self._state: FindnLedState = FindnLedState()
         self._connect_lock: asyncio.Lock = asyncio.Lock()
         self._write_char: BleakGATTCharacteristic | None = None
         self._disconnect_timer: asyncio.TimerHandle | None = None
         self._client: BleakClientWithServiceCache | None = None
-        self._expected_disconnect = False
-        self.loop = asyncio.get_running_loop()
+        self._expected_disconnect: bool = False
+        self.loop: AbstractEventLoop = asyncio.get_running_loop()
         self._update_callback: Callable[[], None] | None = None
         self._protocol: FindnLedBLEProtocol = FindnLedBLEProtocol()
 
@@ -131,6 +133,11 @@ class FindnLedDevice:
         """Return current brightness 0-255."""
         return self._state.brightness
 
+    @property
+    def effect(self) -> str | None:
+        """Return current effect."""
+        return self._state.effect
+
     async def update(self) -> None:
         """Update the Findn LED BLE."""
         await self._ensure_connected()
@@ -163,7 +170,24 @@ class FindnLedDevice:
         """Set color using hue and saturation."""
         logger.debug("%s: Set hs color: %s", self.name, hs)
         await self._send_command(self._protocol.construct_set_hs_color_cmd(hs))
-        self._state = replace(self._state, hs=hs)
+        self._state = replace(self._state, hs=hs, effect=None)
+        self.update_callback()
+
+    async def clear_effect(self) -> None:
+        """Remove effect, set previous color."""
+        await self.set_hs_color(self._state.hs)
+
+    async def set_effect(
+        self, effect_name: str, direction: EffectDirection = EffectDirection.FORWARD
+    ) -> None:
+        """Set the effect."""
+        logger.debug(
+            "%s: Set effect: %s, direction: %s", self.name, effect_name, direction
+        )
+        await self._send_command(
+            self._protocol.construct_set_effect_cmd(effect_name, direction)
+        )
+        self._state = replace(self._state, effect=effect_name)
         self.update_callback()
 
     async def stop(self) -> None:
@@ -197,10 +221,7 @@ class FindnLedDevice:
                 ble_device_callback=lambda: self._ble_device,
             )
             logger.debug("%s: Connected; RSSI: %s", self.name, self.rssi)
-            resolved = self._resolve_characteristics(client.services)
-            if not resolved:
-                # Try to handle services failing to load
-                resolved = self._resolve_characteristics(await client.get_services())  # pyright: ignore[reportUnknownMemberType]
+            self._resolve_characteristics(client.services)
 
             self._client = client
             self._reset_disconnect_timer()
@@ -228,7 +249,7 @@ class FindnLedDevice:
     def _disconnect(self) -> None:
         """Disconnect from device."""
         self._disconnect_timer = None
-        asyncio.create_task(self._execute_timed_disconnect())  # noqa: RUF006 # pyright: ignore[reportUnusedCallResult]
+        asyncio.create_task(self._execute_timed_disconnect())  # noqa: RUF006
 
     async def _execute_timed_disconnect(self) -> None:
         """Execute timed disconnection."""
@@ -247,7 +268,7 @@ class FindnLedDevice:
             self._client = None
             self._write_char = None
             if client and client.is_connected:
-                await client.disconnect()  # pyright: ignore[reportUnusedCallResult]
+                await client.disconnect()
 
     @retry_bluetooth_connection_error(DEFAULT_ATTEMPTS)
     async def _send_command_locked(self, commands: list[bytes]) -> None:
@@ -324,6 +345,7 @@ class FindnLedDevice:
             await self._client.write_gatt_char(
                 self._write_char, command, response=False
             )
+            await asyncio.sleep(0.1)
 
     def _resolve_characteristics(self, services: BleakGATTServiceCollection) -> bool:
         """Resolve characteristics."""

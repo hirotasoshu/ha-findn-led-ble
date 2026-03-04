@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from logging import Logger, getLogger
-from typing import Any, override
+from typing import Any, Final, override
 
 import voluptuous as vol
 from bleak_retry_connector import BLEAK_RETRY_EXCEPTIONS as BLEAK_EXCEPTIONS
@@ -25,7 +25,7 @@ logger: Logger = getLogger(__name__)
 class FindnLedConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Yale Access Bluetooth."""
 
-    VERSION = 1
+    VERSION: Final[int] = 1
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -37,7 +37,7 @@ class FindnLedConfigFlow(ConfigFlow, domain=DOMAIN):
         self, discovery_info: BluetoothServiceInfoBleak
     ) -> ConfigFlowResult:
         """Handle the bluetooth discovery step."""
-        await self.async_set_unique_id(discovery_info.address)  # pyright: ignore [reportUnusedCallResult]
+        await self.async_set_unique_id(discovery_info.address)
         self._abort_if_unique_id_configured()
         self._discovery_info = discovery_info
         self.context["title_placeholders"] = {
@@ -49,18 +49,19 @@ class FindnLedConfigFlow(ConfigFlow, domain=DOMAIN):
 
     @override
     async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
+        self,
+        user_input: dict[str, Any] | None = None,  # pyright: ignore[reportExplicitAny]
     ) -> ConfigFlowResult:
         """Handle the user step to pick discovered device."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            address: Any = user_input[CONF_ADDRESS]  # pyright: ignore [reportAny]
+            address: Any = user_input[CONF_ADDRESS]  # pyright: ignore [reportAny, reportExplicitAny]
             discovery_info = self._discovered_devices[address]
             local_name = discovery_info.name
             await self.async_set_unique_id(
                 discovery_info.address, raise_on_progress=False
-            )  # pyright: ignore [reportUnusedCallResult]
+            )
             self._abort_if_unique_id_configured()
             device = FindnLedDevice(discovery_info.device)
             try:
