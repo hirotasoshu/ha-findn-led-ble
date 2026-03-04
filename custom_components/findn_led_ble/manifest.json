@@ -15,5 +15,5 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/hirotasoshu/ha-findn-led-ble/issues",
   "requirements": ["bluetooth-data-tools"],
-  "version": "0.0.0"
+  "version": "1.0.0"
 }
