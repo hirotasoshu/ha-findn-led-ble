@@ -24,6 +24,7 @@ from .entity import FindnLedEntity
 
 if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from homeassistant.helpers.typing import VolDictType
 
     from .coordinator import FindnLedDataUpdateCoordinator
     from .data import FindnLedConfigEntry
@@ -40,7 +41,7 @@ ENTITY_DESCRIPTIONS = (
     ),
 )
 
-SET_EFFECT_SCHEMA = {
+SET_EFFECT_SCHEMA: VolDictType = {
     vol.Required("effect"): vol.In(EFFECTS_LIST_WITH_OFF),
     vol.Optional("direction", default="forward"): vol.In(["forward", "backward"]),
 }
@@ -74,7 +75,6 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
 
     _attr_supported_color_modes: set[ColorMode] | None = {  # noqa: RUF012
         ColorMode.HS,
-        ColorMode.BRIGHTNESS,
     }
 
     def __init__(
