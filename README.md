@@ -7,6 +7,7 @@
 ![Project Maintenance][maintenance-shield]
 [![Ko-fi][ko-fi-badge]][ko-fi]
 [![Boosty][boosty-badge]][boosty]
+[![Ask DeepWiki][deepwiki-badge]][deepwiki]
 
 Home assistant integration to integrate with LED BLE devices, controlled via apps developed by `FINDN LTD` ([MR STAR](https://play.google.com/store/apps/details?id=com.findn.mrstar&hl=en-US) and [SYMPHONY LIGHT](https://play.google.com/store/apps/details?id=com.findn.symphonylight&hl=en)).
 
@@ -103,3 +104,5 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [maintenance-shield]: https://img.shields.io/badge/maintainer-Maksim%20Zayakin%20%40hirotasoshu-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/hirotasoshu/ha-findn-led-ble.svg?style=for-the-badge
 [releases]: https://github.com/hirotasoshu/ha-findn-led-ble/releases
+[deepwiki]: https://deepwiki.com/hirotasoshu/ha-findn-led-ble
+[deepwiki-badge]: https://deepwiki.com/badge.svg
