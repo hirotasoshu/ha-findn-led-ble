@@ -24,6 +24,7 @@ python-version = "3.14"
 [tool.ruff]
 target-version = "py314"
 
+[tool.ruff.lint]
 select = ["ALL"]
 
 ignore = [
@@ -37,11 +38,11 @@ ignore = [
   "EM102",
 ]
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
 
-[tool.ruff.pyupgrade]
+[tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 25
