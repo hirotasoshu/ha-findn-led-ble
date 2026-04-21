@@ -801,7 +801,7 @@ dev = [
 requires-dist = [
     { name = "bluetooth-data-tools" },
     { name = "colorlog" },
-    { name = "homeassistant", specifier = ">=2026.3.0" },
+    { name = "homeassistant", specifier = ">=2026.2.3" },
 ]
 
 [package.metadata.requires-dev]
