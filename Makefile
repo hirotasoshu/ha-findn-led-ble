@@ -7,7 +7,7 @@ hooks:
 	uv run prek install
 
 lint:
-	uv run prek run --show-diff-on-failure --color=always
+	uv run prek run --all-files --show-diff-on-failure --color=always
 
 develop:
 	@if [ ! -d "$(PWD)/config" ]; then \
