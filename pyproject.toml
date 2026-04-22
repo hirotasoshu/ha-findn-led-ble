@@ -1,6 +1,30 @@
-[tool.ruff]
-target-version = "py312"
+[project]
+name = "ha-findn-led-ble"
+version = "1.0.1"
+requires-python = "==3.14.3"
+dependencies = [
+    "bluetooth-data-tools",
+    "colorlog",
+    "homeassistant>=2026.2.3",
+]
 
+[dependency-groups]
+dev = [
+    "prek",
+    "ruff",
+    "ty",
+]
+
+[tool.uv]
+package = false
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.ruff.lint]
 select = ["ALL"]
 
 ignore = [
@@ -12,19 +36,13 @@ ignore = [
   "TRY003",
   "EM101",
   "EM102",
-
 ]
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
 
-[tool.ruff.pyupgrade]
+[tool.ruff.lint.pyupgrade]
 keep-runtime-typing = true
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 25
-
-
-[tool.basedpyright]
-reportUnusedCallResult = "none"
-reportMissingTypeStubs = "none"
