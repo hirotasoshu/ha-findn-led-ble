@@ -29,24 +29,24 @@ conventions. All integration code lives under `custom_components/findn_led_ble/`
 ## Development Commands
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (requires uv)
+make setup
 
-# Check for lint errors
-ruff check custom_components/
+# Check for lint errors (ruff + ty)
+make lint
 
-# Auto-fix lint errors
-ruff check --fix custom_components/
+# Auto-fix lint errors and format code
+make fix
 
-# Format code
-ruff format custom_components/
+# Install prek hooks (run once after cloning)
+uv run prek install
 ```
 
-Always run `ruff check` and `ruff format` before committing. CI will fail on lint errors.
+Always run `make lint` before committing. CI will fail on lint or type errors. prek hooks run automatically on `git commit`.
 
 ## Code Style
 
-- Python 3.12+ — use modern built-in generics (`list[str]`, `dict[str, int]`, etc.)
+- Python 3.14.3 (pinned) — use modern built-in generics (`list[str]`, `dict[str, int]`, etc.)
 - Type annotations are required on all function signatures
 - All public classes and methods must have docstrings
 - Linter is `ruff` with `select = ["ALL"]`; see `pyproject.toml` for the ignored rules
