@@ -44,7 +44,7 @@ People *love* thorough bug reports. I'm not even kidding.
 
 ## Use a Consistent Coding Style
 
-Use [ruff](https://github.com/astral-sh/ruff) for formatting and linting, and [ty](https://github.com/astral-sh/ty) for type checking. Run `make lint` to check and `make fix` to auto-fix formatting issues.
+Use [ruff](https://github.com/astral-sh/ruff) for formatting and linting, and [ty](https://github.com/astral-sh/ty) for type checking. Run `make lint` to check all files.
 
 ## Test your code modification
 
