@@ -32,14 +32,11 @@ conventions. All integration code lives under `custom_components/findn_led_ble/`
 # Install dependencies (requires uv)
 make setup
 
-# Check for lint errors (ruff + ty)
+# Initialize prek hooks (run once after cloning)
+make hooks
+
+# Run all linters and type checks
 make lint
-
-# Auto-fix lint errors and format code
-make fix
-
-# Install prek hooks (run once after cloning)
-uv run prek install
 ```
 
 Always run `make lint` before committing. CI will fail on lint or type errors. prek hooks run automatically on `git commit`.

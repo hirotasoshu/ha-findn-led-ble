@@ -1,16 +1,13 @@
-.PHONY: setup lint fix develop
+.PHONY: setup hooks lint develop
 
 setup:
 	uv sync
 
-lint:
-	uv run ruff check .
-	uv run ruff format . --check
-	uv run ty check custom_components/
+hooks:
+	uv run prek install
 
-fix:
-	uv run ruff check . --fix
-	uv run ruff format .
+lint:
+	uv run prek run --show-diff-on-failure --color=always
 
 develop:
 	@if [ ! -d "$(PWD)/config" ]; then \

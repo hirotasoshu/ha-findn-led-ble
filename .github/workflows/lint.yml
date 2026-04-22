@@ -25,11 +25,5 @@ jobs:
       - name: "Install dependencies"
         run: uv sync
 
-      - name: "Lint"
-        run: uv run ruff check .
-
-      - name: "Format"
-        run: uv run ruff format . --check
-
-      - name: "Type check"
-        run: uv run ty check custom_components/
+      - name: "Lint & Type Check"
+        run: uv run prek run --show-diff-on-failure --color=always
