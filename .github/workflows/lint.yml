@@ -9,24 +9,26 @@ on:
       - "main"
 
 jobs:
-  ruff:
-    name: "Ruff"
+  lint:
+    name: "Lint & Type Check"
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout the repository"
         uses: "actions/checkout@v6.0.2"
 
-      - name: "Set up Python"
-        uses: actions/setup-python@v6.2.0
+      - name: "Install uv"
+        uses: "astral-sh/setup-uv@v5"
         with:
-          python-version: "3.14"
-          cache: "pip"
+          python-version: "3.14.3"
 
-      - name: "Install requirements"
-        run: python3 -m pip install -r requirements.txt
+      - name: "Install dependencies"
+        run: uv sync
 
       - name: "Lint"
-        run: python3 -m ruff check .
+        run: uv run ruff check .
 
       - name: "Format"
-        run: python3 -m ruff format . --check
+        run: uv run ruff format . --check
+
+      - name: "Type check"
+        run: uv run ty check custom_components/
