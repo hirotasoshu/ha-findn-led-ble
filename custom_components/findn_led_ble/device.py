@@ -72,17 +72,17 @@ class FindnLedDevice:
         self._client: BleakClientWithServiceCache | None = None
         self._expected_disconnect: bool = False
         self.loop: AbstractEventLoop = asyncio.get_running_loop()
-        self._update_callback: Callable[[], None] | None = None
+        self._state_changed_callback: Callable[[], None] | None = None
         self._protocol: FindnLedBLEProtocol = FindnLedBLEProtocol()
 
-    def update_callback(self) -> None:
-        """Execute update callback if set."""
-        if self._update_callback:
-            self._update_callback()
+    def _async_notify_state_changed(self) -> None:
+        """Notify Home Assistant that optimistic state changed."""
+        if self._state_changed_callback:
+            self._state_changed_callback()
 
-    def set_update_callback(self, callback: Callable[[], None] | None) -> None:
-        """Set the update callback."""
-        self._update_callback = callback
+    def set_state_changed_callback(self, callback: Callable[[], None] | None) -> None:
+        """Set the state changed callback."""
+        self._state_changed_callback = callback
 
     def set_ble_device_and_advertisement_data(
         self, ble_device: BLEDevice, advertisement_data: AdvertisementData
@@ -93,11 +93,6 @@ class FindnLedDevice:
 
     @property
     def address(self) -> str:
-        """Return the address."""
-        return self._ble_device.address
-
-    @property
-    def _address(self) -> str:
         """Return the address."""
         return self._ble_device.address
 
@@ -148,14 +143,14 @@ class FindnLedDevice:
         logger.debug("%s: Turn on", self.name)
         await self._send_command(self._protocol.turn_on_command)
         self._state = replace(self._state, power=True)
-        self.update_callback()
+        self._async_notify_state_changed()
 
     async def turn_off(self) -> None:
         """Turn off."""
         logger.debug("%s: Turn off", self.name)
         await self._send_command(self._protocol.turn_off_command)
         self._state = replace(self._state, power=False)
-        self.update_callback()
+        self._async_notify_state_changed()
 
     async def set_brightness(self, brightness: int) -> None:
         """Set the brightness."""
@@ -164,14 +159,14 @@ class FindnLedDevice:
             self._protocol.construct_set_brightness_cmd(brightness)
         )
         self._state = replace(self._state, brightness=brightness)
-        self.update_callback()
+        self._async_notify_state_changed()
 
     async def set_hs_color(self, hs: tuple[float, float]) -> None:
         """Set color using hue and saturation."""
         logger.debug("%s: Set hs color: %s", self.name, hs)
         await self._send_command(self._protocol.construct_set_hs_color_cmd(hs))
         self._state = replace(self._state, hs=hs, effect=None)
-        self.update_callback()
+        self._async_notify_state_changed()
 
     async def clear_effect(self) -> None:
         """Remove effect, set previous color."""
@@ -188,7 +183,7 @@ class FindnLedDevice:
             self._protocol.construct_set_effect_cmd(effect_name, direction)
         )
         self._state = replace(self._state, effect=effect_name)
-        self.update_callback()
+        self._async_notify_state_changed()
 
     async def stop(self) -> None:
         """Stop the Findn LED BLE."""

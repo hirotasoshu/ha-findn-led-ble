@@ -85,7 +85,7 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
         """Initialize the light class."""
         super().__init__(entry, device)
         self.entity_description: LightEntityDescription = entity_description  # pyright: ignore[reportIncompatibleVariableOverride]
-        self.device.set_update_callback(self._handle_device_update)
+        self.device.set_state_changed_callback(self._handle_device_update)
         self._attr_supported_features: LightEntityFeature = LightEntityFeature.EFFECT  # pyright: ignore[reportIncompatibleVariableOverride]
         self._attr_effect_list: list[str] | None = EFFECTS_LIST_WITH_OFF
         self._async_update_attrs()
@@ -93,7 +93,7 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
     @override
     async def async_will_remove_from_hass(self) -> None:
         """Disconnect entity from device state callbacks."""
-        self.device.set_update_callback(None)
+        self.device.set_state_changed_callback(None)
 
     @callback
     def _async_update_attrs(self) -> None:
