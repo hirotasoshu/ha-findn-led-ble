@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from logging import Logger, getLogger
 from typing import Any, Final, override
 
@@ -65,27 +64,21 @@ class FindnLedConfigFlow(ConfigFlow, domain=DOMAIN):
             self._abort_if_unique_id_configured()
             device = FindnLedDevice(discovery_info.device)
             try:
-                await device.update()
-                await device.turn_on()
-                await asyncio.sleep(0.2)
-                await device.turn_off()
-                await asyncio.sleep(0.2)
-                await device.turn_on()
-                await asyncio.sleep(0.2)
-                await device.turn_off()
+                await device.identify()
             except BLEAK_EXCEPTIONS:
                 errors["base"] = "cannot_connect"
             except Exception:
                 logger.exception("Unexpected error")
                 errors["base"] = "unknown"
             else:
-                await device.stop()
                 return self.async_create_entry(
                     title=local_name,
                     data={
                         CONF_ADDRESS: discovery_info.address,
                     },
                 )
+            finally:
+                await device.stop()
 
         if discovery := self._discovery_info:
             self._discovered_devices[discovery.address] = discovery
