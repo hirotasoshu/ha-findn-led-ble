@@ -80,7 +80,7 @@ class FindnLedDevice:
         if self._update_callback:
             self._update_callback()
 
-    def set_update_callback(self, callback: Callable[[], None]) -> None:
+    def set_update_callback(self, callback: Callable[[], None] | None) -> None:
         """Set the update callback."""
         self._update_callback = callback
 

@@ -15,7 +15,6 @@ from homeassistant.components.light import (
 )
 from homeassistant.components.light.const import ColorMode, LightEntityFeature
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import async_get_current_platform
 
 from .const import SERVICE_SET_EFFECT
@@ -26,7 +25,6 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
     from homeassistant.helpers.typing import VolDictType
 
-    from .coordinator import FindnLedDataUpdateCoordinator
     from .data import FindnLedConfigEntry
     from .device import FindnLedDevice
 
@@ -55,7 +53,8 @@ async def async_setup_entry(
     """Set up the light platform."""
     async_add_entities(
         FindnLedLight(
-            coordinator=entry.runtime_data.coordinator,
+            entry=entry,
+            device=entry.runtime_data.device,
             entity_description=entity_description,
         )
         for entity_description in ENTITY_DESCRIPTIONS
@@ -79,23 +78,22 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
 
     def __init__(
         self,
-        coordinator: FindnLedDataUpdateCoordinator,
+        entry: FindnLedConfigEntry,
+        device: FindnLedDevice,
         entity_description: LightEntityDescription,
     ) -> None:
         """Initialize the light class."""
-        super().__init__(coordinator)
+        super().__init__(entry, device)
         self.entity_description: LightEntityDescription = entity_description  # pyright: ignore[reportIncompatibleVariableOverride]
-        self.device: FindnLedDevice = coordinator.config_entry.runtime_data.device
-        self.device.set_update_callback(self._handle_coordinator_update)
-
-        self._attr_unique_id: str | None = self.device.address
-        self._attr_device_info: dr.DeviceInfo | None = dr.DeviceInfo(
-            name=self.device.name,
-            connections={(dr.CONNECTION_BLUETOOTH, self.device.address)},
-        )
+        self.device.set_update_callback(self._handle_device_update)
         self._attr_supported_features: LightEntityFeature = LightEntityFeature.EFFECT  # pyright: ignore[reportIncompatibleVariableOverride]
         self._attr_effect_list: list[str] | None = EFFECTS_LIST_WITH_OFF
         self._async_update_attrs()
+
+    @override
+    async def async_will_remove_from_hass(self) -> None:
+        """Disconnect entity from device state callbacks."""
+        self.device.set_update_callback(None)
 
     @callback
     def _async_update_attrs(self) -> None:
@@ -141,9 +139,8 @@ class FindnLedLight(FindnLedEntity, LightEntity):  # pyright: ignore[reportIncom
         else:
             await self.device.set_effect(effect, direction)
 
-    @override
     @callback
-    def _handle_coordinator_update(self, *args: Any) -> None:  # pyright: ignore[reportExplicitAny, reportAny]
+    def _handle_device_update(self) -> None:
         """Handle data update."""
         self._async_update_attrs()
         self.async_write_ha_state()

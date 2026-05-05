@@ -15,7 +15,6 @@ from homeassistant.const import CONF_ADDRESS, EVENT_HOMEASSISTANT_STOP, Platform
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from .coordinator import FindnLedDataUpdateCoordinator
 from .data import FindnLedData
 from .device import FindnLedDevice
 
@@ -33,9 +32,6 @@ async def async_setup_entry(
     entry: FindnLedConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    coordinator = FindnLedDataUpdateCoordinator(
-        hass=hass,
-    )
     address: str = entry.data[CONF_ADDRESS]  # pyright: ignore[reportAny]
     ble_device = bluetooth.async_ble_device_from_address(
         hass=hass, address=address.upper(), connectable=True
@@ -68,11 +64,9 @@ async def async_setup_entry(
     entry.runtime_data = FindnLedData(
         title=entry.title,
         device=device,
-        coordinator=coordinator,
     )
 
-    # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-    await coordinator.async_config_entry_first_refresh()
+    await device.update()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))

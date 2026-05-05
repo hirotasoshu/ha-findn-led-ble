@@ -2,24 +2,27 @@
 
 from __future__ import annotations
 
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from typing import TYPE_CHECKING
 
-from .coordinator import FindnLedDataUpdateCoordinator
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.entity import Entity
+
+if TYPE_CHECKING:
+    from .data import FindnLedConfigEntry
+    from .device import FindnLedDevice
 
 
-class FindnLedEntity(CoordinatorEntity[FindnLedDataUpdateCoordinator]):
-    """BlueprintEntity class."""
+class FindnLedEntity(Entity):
+    """Base entity for Findn LED BLE."""
 
-    def __init__(self, coordinator: FindnLedDataUpdateCoordinator) -> None:
+    _attr_has_entity_name = True
+
+    def __init__(self, entry: FindnLedConfigEntry, device: FindnLedDevice) -> None:
         """Initialize."""
-        super().__init__(coordinator)
-        self._attr_unique_id: str | None = coordinator.config_entry.entry_id
-        self._attr_device_info: DeviceInfo | None = DeviceInfo(
-            identifiers={
-                (
-                    coordinator.config_entry.domain,
-                    coordinator.config_entry.entry_id,
-                ),
-            },
+        self.device = device
+        self._attr_unique_id: str | None = device.address
+        self._attr_device_info: dr.DeviceInfo | None = dr.DeviceInfo(
+            name=device.name,
+            connections={(dr.CONNECTION_BLUETOOTH, device.address)},
+            identifiers={(entry.domain, entry.entry_id)},
         )

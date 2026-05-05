@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
-    from .coordinator import FindnLedDataUpdateCoordinator
     from .device import FindnLedDevice
 
 
@@ -21,4 +20,3 @@ class FindnLedData:
 
     title: str
     device: FindnLedDevice
-    coordinator: FindnLedDataUpdateCoordinator
