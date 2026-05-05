@@ -11,6 +11,7 @@ from bleak_retry_connector import BLEAK_RETRY_EXCEPTIONS as BLEAK_EXCEPTIONS
 from bleak_retry_connector import (
     BleakClientWithServiceCache,
     BleakNotFoundError,
+    close_stale_connections,
     establish_connection,
     retry_bluetooth_connection_error,
 )
@@ -27,7 +28,6 @@ if TYPE_CHECKING:
 
 BLEAK_BACKOFF_TIME = 0.25
 COMMAND_SETTLE_DELAY = 0.1
-DEFAULT_ATTEMPTS = 3
 DISCONNECT_DELAY = 120
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,7 @@ class FindnLedBleTransport:
         self._write_char: BleakGATTCharacteristic | None = None
         self.loop: AbstractEventLoop = asyncio.get_running_loop()
 
-    def set_ble_device_and_advertisement_data(
+    def update_ble_device(
         self, ble_device: BLEDevice, advertisement_data: AdvertisementData
     ) -> None:
         """Update the BLE device and advertisement data from discovery."""
@@ -78,48 +78,8 @@ class FindnLedBleTransport:
             return self._advertisement_data.rssi
         return None
 
-    async def connect(self) -> None:
-        """Ensure the BLE connection is established."""
-        if self._connect_lock.locked():
-            logger.debug(
-                "%s: Connection already in progress, waiting for it to complete; "
-                "RSSI: %s",
-                self.name,
-                self.rssi,
-            )
-        if self._client and self._client.is_connected:
-            self._reset_disconnect_timer()
-            return
-        async with self._connect_lock:
-            if self._client and self._client.is_connected:
-                self._reset_disconnect_timer()
-                return
-            logger.debug("%s: Connecting; RSSI: %s", self.name, self.rssi)
-            client = await establish_connection(
-                BleakClientWithServiceCache,
-                self._ble_device,
-                self.name,
-                self._disconnected,
-                use_services_cache=True,
-                ble_device_callback=lambda: self._ble_device,
-            )
-            logger.debug("%s: Connected; RSSI: %s", self.name, self.rssi)
-
-            if not self._resolve_characteristics(client.services):
-                await self._handle_missing_characteristic(client)
-                raise CharacteristicMissingError("Write characteristic missing")
-
-            self._client = client
-            self._reset_disconnect_timer()
-
-    async def disconnect(self) -> None:
-        """Disconnect from the BLE device."""
-        self._cancel_disconnect_timer()
-        await self._execute_disconnect()
-
-    async def write_commands(self, commands: list[bytes] | bytes) -> None:
-        """Write one or more commands to the connected BLE device."""
-        await self.connect()
+    async def write(self, commands: list[bytes] | bytes) -> None:
+        """Write one or more commands to the BLE device."""
         if not isinstance(commands, list):
             commands = [commands]
         logger.debug(
@@ -135,8 +95,9 @@ class FindnLedBleTransport:
                 self.rssi,
             )
         async with self._operation_lock:
+            await self.ensure_connected()
             try:
-                await self._write_commands_locked(commands)
+                await self._write_locked(commands)
             except BleakNotFoundError:
                 logger.exception(
                     "%s: device not found, no longer in range, or poor RSSI: %s",
@@ -154,6 +115,46 @@ class FindnLedBleTransport:
             except BLEAK_EXCEPTIONS:
                 logger.exception("%s: communication failed", self.name)
                 raise
+
+    async def disconnect(self) -> None:
+        """Disconnect from the BLE device."""
+        self._cancel_disconnect_timer()
+        await self._disconnect_locked()
+
+    async def ensure_connected(self) -> None:
+        """Ensure the BLE connection is established."""
+        if self._connect_lock.locked():
+            logger.debug(
+                "%s: Connection already in progress, waiting for it to complete; "
+                "RSSI: %s",
+                self.name,
+                self.rssi,
+            )
+        if self._client and self._client.is_connected:
+            self._reset_disconnect_timer()
+            return
+        async with self._connect_lock:
+            if self._client and self._client.is_connected:
+                self._reset_disconnect_timer()
+                return
+            await close_stale_connections(self._ble_device)
+            logger.debug("%s: Connecting; RSSI: %s", self.name, self.rssi)
+            client = await establish_connection(
+                BleakClientWithServiceCache,
+                self._ble_device,
+                self.name,
+                self._disconnected,
+                use_services_cache=True,
+                ble_device_callback=lambda: self._ble_device,
+            )
+            logger.debug("%s: Connected; RSSI: %s", self.name, self.rssi)
+
+            if not self._resolve_characteristics(client.services):
+                await self._handle_missing_characteristic(client)
+                raise CharacteristicMissingError("Write characteristic missing")
+
+            self._client = client
+            self._reset_disconnect_timer()
 
     def _cancel_disconnect_timer(self) -> None:
         """Cancel the idle disconnect timer."""
@@ -174,11 +175,11 @@ class FindnLedBleTransport:
         self._cancel_disconnect_timer()
 
     def _disconnect(self) -> None:
-        """Schedule an idle BLE disconnect."""
+        """Schedule an idle BLE disconnect task."""
         self._disconnect_timer = None
-        asyncio.create_task(self._execute_timed_disconnect())  # noqa: RUF006
+        asyncio.create_task(self._disconnect_after_timeout())  # noqa: RUF006
 
-    async def _execute_disconnect(self) -> None:
+    async def _disconnect_locked(self) -> None:
         """Disconnect while holding the connection lock."""
         async with self._connect_lock:
             client = self._client
@@ -188,14 +189,14 @@ class FindnLedBleTransport:
             if client and client.is_connected:
                 await client.disconnect()
 
-    async def _execute_timed_disconnect(self) -> None:
+    async def _disconnect_after_timeout(self) -> None:
         """Disconnect after the idle timeout expires."""
         logger.debug(
             "%s: Disconnecting after timeout of %s",
             self.name,
             DISCONNECT_DELAY,
         )
-        await self._execute_disconnect()
+        await self._disconnect_locked()
 
     async def _handle_missing_characteristic(
         self, client: BleakClientWithServiceCache
@@ -208,7 +209,7 @@ class FindnLedBleTransport:
             await client.disconnect()
         self._write_char = None
 
-    async def _execute_commands_locked(self, commands: list[bytes]) -> None:
+    async def _execute_write_locked(self, commands: list[bytes]) -> None:
         """Execute command writes while the operation lock is held."""
         assert self._client is not None  # noqa: S101
         if not self._write_char:
@@ -232,11 +233,11 @@ class FindnLedBleTransport:
         self._write_char = services.get_characteristic(WRITE_CHARACTERISTIC_UUID)
         return bool(self._write_char)
 
-    @retry_bluetooth_connection_error(DEFAULT_ATTEMPTS)
-    async def _write_commands_locked(self, commands: list[bytes]) -> None:
+    @retry_bluetooth_connection_error()
+    async def _write_locked(self, commands: list[bytes]) -> None:
         """Write commands with bluetooth retry handling."""
         try:
-            await self._execute_commands_locked(commands)
+            await self._execute_write_locked(commands)
         except BleakDBusError as ex:
             await asyncio.sleep(BLEAK_BACKOFF_TIME)
             logger.debug(
@@ -246,7 +247,7 @@ class FindnLedBleTransport:
                 BLEAK_BACKOFF_TIME,
                 ex,
             )
-            await self._execute_disconnect()
+            await self._disconnect_locked()
             raise
         except BleakError as ex:
             logger.debug(
@@ -255,5 +256,5 @@ class FindnLedBleTransport:
                 self.rssi,
                 ex,
             )
-            await self._execute_disconnect()
+            await self._disconnect_locked()
             raise

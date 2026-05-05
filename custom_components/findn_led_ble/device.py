@@ -53,9 +53,7 @@ class FindnLedDevice:
         self, ble_device: BLEDevice, advertisement_data: AdvertisementData
     ) -> None:
         """Set the ble device."""
-        self._transport.set_ble_device_and_advertisement_data(
-            ble_device, advertisement_data
-        )
+        self._transport.update_ble_device(ble_device, advertisement_data)
 
     @property
     def address(self) -> str:
@@ -99,7 +97,7 @@ class FindnLedDevice:
 
     async def update(self) -> None:
         """Update the Findn LED BLE."""
-        await self._transport.connect()
+        await self._transport.ensure_connected()
 
     async def turn_on(self) -> None:
         """Turn on."""
@@ -154,4 +152,4 @@ class FindnLedDevice:
 
     async def _send_command(self, commands: list[bytes] | bytes) -> None:
         """Send command to the BLE transport."""
-        await self._transport.write_commands(commands)
+        await self._transport.write(commands)
