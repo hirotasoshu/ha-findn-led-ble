@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import patch
 
 from bleak.backends.device import BLEDevice
 
@@ -51,11 +50,9 @@ class FakeTransport:
 def _device_with_transport() -> tuple[FindnLedDevice, FakeTransport]:
     """Create a FindnLedDevice backed by a fake transport."""
     transport = FakeTransport()
-    with patch(
-        "custom_components.findn_led_ble.device.FindnLedBleTransport",
-        return_value=transport,
-    ):
-        device = FindnLedDevice(BLEDevice("AA:BB:CC:DD:EE:FF", "Findn Test", {}))
+    device = FindnLedDevice(
+        BLEDevice("AA:BB:CC:DD:EE:FF", "Findn Test", {}), transport=transport
+    )
     return device, transport
 
 

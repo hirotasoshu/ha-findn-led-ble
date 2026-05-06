@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, replace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from .ble import FindnLedBleTransport
 from .device_protocol import EffectDirection, FindnLedBLEProtocol
@@ -14,6 +14,36 @@ if TYPE_CHECKING:
 
     from bleak.backends.device import BLEDevice
     from bleak.backends.scanner import AdvertisementData
+
+
+class FindnLedTransport(Protocol):
+    """Transport interface used by FindnLedDevice."""
+
+    @property
+    def address(self) -> str:
+        """Return the transport address."""
+
+    @property
+    def name(self) -> str:
+        """Return the transport name."""
+
+    @property
+    def rssi(self) -> int | None:
+        """Return latest transport RSSI."""
+
+    async def disconnect(self) -> None:
+        """Disconnect transport."""
+
+    async def ensure_connected(self) -> None:
+        """Ensure transport is connected."""
+
+    def update_ble_device(
+        self, ble_device: BLEDevice, advertisement_data: AdvertisementData
+    ) -> None:
+        """Update transport BLE device data."""
+
+    async def write(self, commands: list[bytes] | bytes) -> None:
+        """Write commands through transport."""
 
 
 @dataclass(frozen=True)
@@ -30,11 +60,15 @@ class FindnLedDevice:
     """Findn LED BLE Device."""
 
     def __init__(
-        self, ble_device: BLEDevice, advertisement_data: AdvertisementData | None = None
+        self,
+        ble_device: BLEDevice,
+        advertisement_data: AdvertisementData | None = None,
+        transport: FindnLedTransport | None = None,
     ) -> None:
         """Init the Findn LED BLE."""
-        self._transport: FindnLedBleTransport = FindnLedBleTransport(
-            ble_device, advertisement_data
+        self._transport: FindnLedTransport = transport or FindnLedBleTransport(
+            ble_device,
+            advertisement_data,
         )
         self._state: FindnLedState = FindnLedState()
         self._state_changed_callback: Callable[[], None] | None = None
