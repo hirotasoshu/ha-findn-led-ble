@@ -1,4 +1,4 @@
-.PHONY: setup hooks lint develop
+.PHONY: setup hooks lint test develop
 
 setup:
 	uv sync
@@ -8,6 +8,9 @@ hooks:
 
 lint:
 	uv run prek run --all-files --show-diff-on-failure --color=always
+
+test:
+	uv run pytest
 
 develop:
 	@if [ ! -d "$(PWD)/config" ]; then \
