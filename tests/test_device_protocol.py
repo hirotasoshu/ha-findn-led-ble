@@ -16,14 +16,18 @@ def protocol() -> FindnLedBLEProtocol:
     return FindnLedBLEProtocol()
 
 
-def test_turn_on_command(protocol: FindnLedBLEProtocol) -> None:
-    """Test turn on command bytes."""
-    assert protocol.turn_on_command == bytes.fromhex("bc01010155")
-
-
-def test_turn_off_command(protocol: FindnLedBLEProtocol) -> None:
-    """Test turn off command bytes."""
-    assert protocol.turn_off_command == bytes.fromhex("bc01010055")
+@pytest.mark.parametrize(
+    ("attribute", "expected"),
+    [
+        ("turn_on_command", "bc01010155"),
+        ("turn_off_command", "bc01010055"),
+    ],
+)
+def test_power_command(
+    protocol: FindnLedBLEProtocol, attribute: str, expected: str
+) -> None:
+    """Test power command bytes."""
+    assert getattr(protocol, attribute) == bytes.fromhex(expected)
 
 
 @pytest.mark.parametrize(
@@ -64,7 +68,7 @@ def test_construct_set_effect_cmd_backward(protocol: FindnLedBLEProtocol) -> Non
     ]
 
 
-def test_construct_set_effect_cmd_rejects_unknown_effect(
+def test_set_effect_cmd_rejects_unknown_effect(
     protocol: FindnLedBLEProtocol,
 ) -> None:
     """Test unknown effect names are rejected."""

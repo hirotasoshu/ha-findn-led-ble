@@ -16,11 +16,9 @@ from bleak_retry_connector import (
     retry_bluetooth_connection_error,
 )
 
-from .const import WRITE_CHARACTERISTIC_UUID
+from custom_components.findn_led_ble.const import WRITE_CHARACTERISTIC_UUID
 
 if TYPE_CHECKING:
-    from asyncio import AbstractEventLoop, Lock
-
     from bleak.backends.characteristic import BleakGATTCharacteristic
     from bleak.backends.device import BLEDevice
     from bleak.backends.scanner import AdvertisementData
@@ -50,9 +48,9 @@ class FindnLedBleTransport:
         self._connect_lock: asyncio.Lock = asyncio.Lock()
         self._disconnect_timer: asyncio.TimerHandle | None = None
         self._expected_disconnect: bool = False
-        self._operation_lock: Lock = asyncio.Lock()
+        self._operation_lock: asyncio.Lock = asyncio.Lock()
         self._write_char: BleakGATTCharacteristic | None = None
-        self.loop: AbstractEventLoop = asyncio.get_running_loop()
+        self.loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
 
     def update_ble_device(
         self, ble_device: BLEDevice, advertisement_data: AdvertisementData

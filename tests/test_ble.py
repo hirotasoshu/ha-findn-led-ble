@@ -65,14 +65,14 @@ async def test_write_reuses_connected_client() -> None:
         await transport.write(b"first")
         await transport.write(b"second")
         await transport.disconnect()
+        close_stale_connections.assert_awaited_once()
+        establish_connection.assert_awaited_once()
 
-    close_stale_connections.assert_awaited_once()
-    establish_connection.assert_awaited_once()
     assert client.write_gatt_char.await_count == EXPECTED_WRITE_COUNT
     client.disconnect.assert_awaited_once()
 
 
-async def test_missing_characteristic_clears_cache_and_disconnects() -> None:
+async def test_missing_characteristic_clears_cache() -> None:
     """Test stale service cache is cleared when the write characteristic is absent."""
     client = FakeClient()
     client.services = FakeServices(None)

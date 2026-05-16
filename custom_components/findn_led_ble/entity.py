@@ -8,8 +8,8 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import Entity
 
 if TYPE_CHECKING:
-    from .data import FindnLedConfigEntry
-    from .device import FindnLedDevice
+    from custom_components.findn_led_ble.data import FindnLedConfigEntry
+    from custom_components.findn_led_ble.device import FindnLedDevice
 
 
 class FindnLedEntity(Entity):

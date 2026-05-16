@@ -18,6 +18,15 @@ if TYPE_CHECKING:
 IDENTIFY_COMMAND_COUNT = 4
 
 
+async def _skip_sleep(_delay: float) -> None:
+    """Skip sleeps in identify tests."""
+
+
+def _record_power_state(device: FindnLedDevice, states: list[bool]) -> None:
+    """Record current device power state."""
+    states.append(device.is_on)
+
+
 class FakeTransport:
     """Fake BLE transport for device tests."""
 
@@ -56,15 +65,14 @@ def _device_with_transport() -> tuple[FindnLedDevice, FakeTransport]:
     return device, transport
 
 
-async def test_turn_on_updates_state_after_command_write() -> None:
+async def test_turn_on_updates_state_after_write() -> None:
     """Test turn_on writes before publishing optimistic state."""
     device, transport = _device_with_transport()
     callback_states: list[bool] = []
 
-    def _record_state() -> None:
-        callback_states.append(device.is_on)
-
-    device.set_state_changed_callback(_record_state)
+    device.register_state_changed_callback(
+        lambda: _record_power_state(device, callback_states)
+    )
 
     await device.turn_on()
 
@@ -89,9 +97,6 @@ async def test_identify_blinks_without_leaving_light_on(
 ) -> None:
     """Test config-flow identification writes a complete blink sequence."""
     device, transport = _device_with_transport()
-
-    async def _skip_sleep(_delay: float) -> None:
-        return None
 
     monkeypatch.setattr(
         "custom_components.findn_led_ble.device.asyncio.sleep", _skip_sleep

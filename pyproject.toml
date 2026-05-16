@@ -10,11 +10,16 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "aiousbwatcher>=1.1.2",
+    "flake8>=7.3.0",
     "prek",
+    "pyserial>=3.5",
     "pytest",
     "pytest-asyncio",
+    "pytest-homeassistant-custom-component>=0.13.325",
     "ruff",
     "ty",
+    "wemake-python-styleguide>=1.6.2",
 ]
 
 [tool.uv]

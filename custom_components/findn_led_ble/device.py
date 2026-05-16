@@ -6,8 +6,11 @@ import asyncio
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Protocol
 
-from .ble import FindnLedBleTransport
-from .device_protocol import EffectDirection, FindnLedBLEProtocol
+from custom_components.findn_led_ble.ble import FindnLedBleTransport
+from custom_components.findn_led_ble.device_protocol import (
+    EffectDirection,
+    FindnLedBLEProtocol,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -56,6 +59,9 @@ class FindnLedState:
     effect: str | None = None
 
 
+IDENTIFY_SLEEP_DELAY = 0.2
+
+
 class FindnLedDevice:
     """Findn LED BLE Device."""
 
@@ -74,12 +80,9 @@ class FindnLedDevice:
         self._state_changed_callback: Callable[[], None] | None = None
         self._protocol: FindnLedBLEProtocol = FindnLedBLEProtocol()
 
-    def _async_notify_state_changed(self) -> None:
-        """Notify Home Assistant that optimistic state changed."""
-        if self._state_changed_callback:
-            self._state_changed_callback()
-
-    def set_state_changed_callback(self, callback: Callable[[], None] | None) -> None:
+    def register_state_changed_callback(
+        self, callback: Callable[[], None] | None
+    ) -> None:
         """Set the state changed callback."""
         self._state_changed_callback = callback
 
@@ -180,10 +183,21 @@ class FindnLedDevice:
     async def identify(self) -> None:
         """Blink the strip to identify it during config flow."""
         await self.update()
-        for power_action in (self.turn_on, self.turn_off, self.turn_on, self.turn_off):
-            await power_action()
-            await asyncio.sleep(0.2)
+        await self._blink_once()
+        await self._blink_once()
 
     async def _send_command(self, commands: list[bytes] | bytes) -> None:
         """Send command to the BLE transport."""
         await self._transport.write(commands)
+
+    def _async_notify_state_changed(self) -> None:
+        """Notify Home Assistant that optimistic state changed."""
+        if self._state_changed_callback:
+            self._state_changed_callback()
+
+    async def _blink_once(self) -> None:
+        """Blink the strip once."""
+        await self.turn_on()
+        await asyncio.sleep(IDENTIFY_SLEEP_DELAY)
+        await self.turn_off()
+        await asyncio.sleep(IDENTIFY_SLEEP_DELAY)
