@@ -1,7 +1,5 @@
 """BLE transport for Findn LED devices."""
 
-from __future__ import annotations
-
 import asyncio
 import logging
 from typing import TYPE_CHECKING

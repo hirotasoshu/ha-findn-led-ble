@@ -1,7 +1,5 @@
 """Tests for the Findn LED BLE config flow."""
 
-from __future__ import annotations
-
 from unittest.mock import AsyncMock, patch
 
 from bleak.backends.device import BLEDevice

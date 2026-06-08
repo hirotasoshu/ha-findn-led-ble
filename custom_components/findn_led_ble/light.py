@@ -1,7 +1,5 @@
 """Light platform for findn_led_ble."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, override
 
 import voluptuous as vol

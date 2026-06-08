@@ -5,8 +5,6 @@ For more details about this integration, please refer to
 https://github.com/hirotasoshu/ha-findn-led-ble
 """
 
-from __future__ import annotations
-
 from functools import partial
 from typing import TYPE_CHECKING
 

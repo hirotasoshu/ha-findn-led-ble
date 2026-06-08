@@ -1,7 +1,5 @@
 """Tests for Findn LED BLE protocol commands."""
 
-from __future__ import annotations
-
 import pytest
 
 from custom_components.findn_led_ble.device_protocol import (

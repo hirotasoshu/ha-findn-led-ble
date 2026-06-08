@@ -1,7 +1,5 @@
 """Adds config flow for Blueprint."""
 
-from __future__ import annotations
-
 from logging import Logger, getLogger
 from typing import Any, Final, override
 

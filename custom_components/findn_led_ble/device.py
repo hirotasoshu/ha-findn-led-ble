@@ -1,7 +1,5 @@
 """Findn LED BLE Device."""
 
-from __future__ import annotations
-
 import asyncio
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Protocol

@@ -1,7 +1,5 @@
 """Tests for Findn LED device state handling."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from bleak.backends.device import BLEDevice
