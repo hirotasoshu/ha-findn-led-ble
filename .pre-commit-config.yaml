@@ -22,6 +22,13 @@ repos:
         language: unsupported
         types: [python]
 
+      - id: local-wemake-python-styleguide
+        name: wemake-python-styleguide
+        entry: uv run flake8 --select=WPS
+        require_serial: true
+        language: unsupported
+        types: [python]
+
       - id: local-ty
         name: ty check
         entry: uv run ty check custom_components/

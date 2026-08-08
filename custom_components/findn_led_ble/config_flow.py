@@ -1,8 +1,5 @@
 """Adds config flow for Blueprint."""
 
-from __future__ import annotations
-
-import asyncio
 from logging import Logger, getLogger
 from typing import Any, Final, override
 
@@ -16,8 +13,8 @@ from homeassistant.components.bluetooth import (
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_ADDRESS
 
-from .const import DOMAIN, LOCAL_NAME
-from .device import FindnLedDevice
+from custom_components.findn_led_ble.const import DOMAIN, LOCAL_NAME
+from custom_components.findn_led_ble.device import FindnLedDevice
 
 logger: Logger = getLogger(__name__)
 
@@ -56,49 +53,18 @@ class FindnLedConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            address: Any = user_input[CONF_ADDRESS]  # pyright: ignore [reportAny, reportExplicitAny]
+            address = str(user_input[CONF_ADDRESS])  # pyright: ignore[reportAny]
             discovery_info = self._discovered_devices[address]
-            local_name = discovery_info.name
-            await self.async_set_unique_id(
-                discovery_info.address, raise_on_progress=False
-            )
-            self._abort_if_unique_id_configured()
-            device = FindnLedDevice(discovery_info.device)
-            try:
-                await device.update()
-                await device.turn_on()
-                await asyncio.sleep(0.2)
-                await device.turn_off()
-                await asyncio.sleep(0.2)
-                await device.turn_on()
-                await asyncio.sleep(0.2)
-                await device.turn_off()
-            except BLEAK_EXCEPTIONS:
-                errors["base"] = "cannot_connect"
-            except Exception:
-                logger.exception("Unexpected error")
-                errors["base"] = "unknown"
-            else:
-                await device.stop()
+            errors = await self._async_validate_discovery(discovery_info)
+            if not errors:
                 return self.async_create_entry(
-                    title=local_name,
+                    title=discovery_info.name,
                     data={
                         CONF_ADDRESS: discovery_info.address,
                     },
                 )
 
-        if discovery := self._discovery_info:
-            self._discovered_devices[discovery.address] = discovery
-        else:
-            current_addresses = self._async_current_ids()
-            for discovery in async_discovered_service_info(self.hass):
-                if (
-                    discovery.address in current_addresses
-                    or discovery.address in self._discovered_devices
-                    or not discovery.name.startswith(LOCAL_NAME)
-                ):
-                    continue
-                self._discovered_devices[discovery.address] = discovery
+        self._async_populate_discovered_devices()
 
         if not self._discovered_devices:
             return self.async_abort(reason="no_devices_found")
@@ -119,4 +85,49 @@ class FindnLedConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=data_schema,
             errors=errors,
+        )
+
+    async def _async_validate_discovery(
+        self, discovery_info: BluetoothServiceInfoBleak
+    ) -> dict[str, str]:
+        """Validate that a discovered device can be contacted."""
+        await self.async_set_unique_id(discovery_info.address, raise_on_progress=False)
+        self._abort_if_unique_id_configured()
+        device = FindnLedDevice(discovery_info.device)
+        try:
+            await device.identify()
+        except BLEAK_EXCEPTIONS:
+            return {"base": "cannot_connect"}
+        except Exception:
+            logger.exception("Unexpected error")
+            return {"base": "unknown"}
+        finally:
+            await device.stop()
+        return {}
+
+    def _async_populate_discovered_devices(self) -> None:
+        """Populate flow choices from current discovery data."""
+        discovery = self._discovery_info
+        if discovery:
+            self._discovered_devices[discovery.address] = discovery
+            return
+
+        current_addresses = {
+            address for address in self._async_current_ids() if address is not None
+        }
+        for discovery in async_discovered_service_info(self.hass):
+            if self._async_should_skip_discovery(discovery, current_addresses):
+                continue
+            self._discovered_devices[discovery.address] = discovery
+
+    def _async_should_skip_discovery(
+        self,
+        discovery: BluetoothServiceInfoBleak,
+        current_addresses: set[str],
+    ) -> bool:
+        """Return whether a discovered device should be skipped."""
+        return (
+            discovery.address in current_addresses
+            or discovery.address in self._discovered_devices
+            or not discovery.name.startswith(LOCAL_NAME)
         )

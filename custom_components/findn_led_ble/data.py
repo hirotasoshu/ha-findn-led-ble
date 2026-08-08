@@ -1,15 +1,12 @@
 """Custom types for findn_led_ble."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
-    from .coordinator import FindnLedDataUpdateCoordinator
-    from .device import FindnLedDevice
+    from custom_components.findn_led_ble.device import FindnLedDevice
 
 
 type FindnLedConfigEntry = ConfigEntry[FindnLedData]
@@ -21,4 +18,3 @@ class FindnLedData:
 
     title: str
     device: FindnLedDevice
-    coordinator: FindnLedDataUpdateCoordinator
